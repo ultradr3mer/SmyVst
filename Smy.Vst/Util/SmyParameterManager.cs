@@ -9,7 +9,18 @@ namespace Smy.Vst.Util
     internal bool IsInteger = false;
     internal bool IsSwitch = false;
     private VstParameterManager innerManager;
-    private Action<float>? updateAction;
+
+    public class ParameterChangedEventArgs : EventArgs
+    {
+      public ParameterChangedEventArgs(float newValue)
+      {
+        NewValue = newValue;
+      }
+
+      public float NewValue { get; set; }
+    }
+
+    public event EventHandler<ParameterChangedEventArgs> ParameterChanged;
 
     public SmyParameterManager(VstParameterInfo paramInfo, Action<float>? updateAction = null, float min = 0, float max = 1)
     {
@@ -17,19 +28,21 @@ namespace Smy.Vst.Util
                         .Normalize()
                         .ToManager();
 
-      this.updateAction = updateAction;
+      if(updateAction != null)
+        this.ParameterChanged += (o,a) => updateAction(a.NewValue);
+
       Min = min;
       Max = max;
 
-      //this.innerManager.PropertyChanged += InnerManager_PropertyChanged;
-      this.updateAction?.Invoke(paramInfo.DefaultValue);
+      this.innerManager.PropertyChanged += InnerManager_PropertyChanged;
+      this.ParameterChanged?.Invoke(this, new ParameterChangedEventArgs(paramInfo.DefaultValue));
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public float CurrentValue
     {
-      get => this.innerManager.ActiveParameter?.Value  ?? this.innerManager.CurrentValue;
+      get => this.innerManager.CurrentValue;
       set
       {
         if (value == CurrentValue)
@@ -37,7 +50,7 @@ namespace Smy.Vst.Util
 
         if (this.innerManager.ActiveParameter != null)
         {
-          //this.innerManager.ActiveParameter.Value = (float)value;
+          this.innerManager.ActiveParameter.Value = (float)value;
         }
       }
     }
@@ -52,8 +65,8 @@ namespace Smy.Vst.Util
     {
       if (e.PropertyName == nameof(VstParameterManager.CurrentValue))
       {
-        updateAction?.Invoke(this.innerManager.CurrentValue);
-        //PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CurrentValue)));
+        ParameterChanged?.Invoke(this, new ParameterChangedEventArgs(this.innerManager.CurrentValue));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CurrentValue)));
       }
     }
 

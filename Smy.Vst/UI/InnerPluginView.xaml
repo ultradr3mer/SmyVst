@@ -11,19 +11,24 @@
     <ResourceDictionary Source="/Smy.Vst;component/UI/StyleDictionary.xaml" />
   </UserControl.Resources>
   <Grid Background="{StaticResource MahApps.Brushes.Control.Background}">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="30"/>
+      <RowDefinition Height="*"/>
+    </Grid.RowDefinitions>
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="1.5*"/>
       <ColumnDefinition Width="3*"/>
       <ColumnDefinition Width="3*"/>
     </Grid.ColumnDefinitions>
-    <ListBox x:Name="listBox" ItemsSource="{Binding GeneratorVms}" d:ItemsSource="{d:SampleData ItemCount=5}" >
+    <local:Wave Grid.ColumnSpan="3" DataContext="{Binding Plot}"/>
+    <ListBox Grid.Row="1" x:Name="listBox" ItemsSource="{Binding GeneratorVms}" >
       <ListBox.ItemTemplate>
         <DataTemplate >
           <CheckBox Content="{Binding Label}" IsChecked="{Binding IsValue}" HorizontalAlignment="Left"/>
         </DataTemplate>
       </ListBox.ItemTemplate>
     </ListBox>
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Grid.Column="1" >
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Grid.Row="1" Grid.Column="1" Grid.RowSpan="2" >
       <ItemsControl ItemsSource="{Binding GeneralVms}" d:ItemsSource="{d:SampleData ItemCount=5}" >
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
@@ -37,10 +42,10 @@
         </ItemsControl.ItemTemplate>
       </ItemsControl>
     </ScrollViewer>
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Grid.Column="2" >
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Grid.Row="1" Grid.Column="2" Grid.RowSpan="2" >
       <StackPanel>
         <Label FontSize="16" Foreground="{DynamicResource MahApps.Brushes.SystemControlPageTextBaseMedium}" Content="Envelopes" />
-        <ItemsControl ItemsSource="{Binding EnvelopeVms}" d:ItemsSource="{d:SampleData ItemCount=5}" >
+        <ItemsControl ItemsSource="{Binding EnvelopeVms}"  >
           <ItemsControl.ItemTemplate>
             <DataTemplate>
               <local:EnvelopeEditorView HorizontalAlignment="Stretch" Margin="2"/>
@@ -48,7 +53,7 @@
           </ItemsControl.ItemTemplate>
         </ItemsControl>
         <Label FontSize="16" Foreground="{DynamicResource MahApps.Brushes.SystemControlPageTextBaseMedium}" Content="Filters" />
-        <ItemsControl ItemsSource="{Binding FilterVms}" d:ItemsSource="{d:SampleData ItemCount=5}" >
+        <ItemsControl ItemsSource="{Binding FilterVms}" >
           <ItemsControl.ItemTemplate>
             <DataTemplate>
               <local:FilterEditorView HorizontalAlignment="Stretch" Margin="2"/>

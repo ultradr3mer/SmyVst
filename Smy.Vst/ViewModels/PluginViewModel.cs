@@ -1,15 +1,28 @@
-﻿using System.ComponentModel;
+﻿using Jacobi.Vst.Core;
+using Smy.Vst.Smy;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
+using System.Windows;
+using System.Windows.Documents;
+using System.Windows.Forms;
+using System.Windows.Media;
 using VstNetAudioPlugin;
 
 namespace Smy.Vst.ViewModels
 {
-  internal class PluginViewModel
+  internal class PluginViewModel : INotifyPropertyChanged
   {
-    public BindingList<KnobViewModel> GeneratorVms { get; set; } = new BindingList<KnobViewModel>();
-    public BindingList<DailViewModel> GeneralVms { get; set; } = new BindingList<DailViewModel>();
-    public BindingList<FilterViewModel> FilterVms { get; set; } = new BindingList<FilterViewModel>();
-    public BindingList<EnvelopeLinkViewModel> UnasignedEnvelopeLinkVms { get; set; } = new BindingList<EnvelopeLinkViewModel>();
     public BindingList<EnvelopeViewModel> EnvelopeVms { get; set; } = new BindingList<EnvelopeViewModel>();
+    public BindingList<FilterViewModel> FilterVms { get; set; } = new BindingList<FilterViewModel>();
+    public BindingList<DailViewModel> GeneralVms { get; set; } = new BindingList<DailViewModel>();
+    public BindingList<KnobViewModel> GeneratorVms { get; set; } = new BindingList<KnobViewModel>();
+    public List<Point>? Plot { get; set; }
+    public BindingList<EnvelopeLinkViewModel> UnasignedEnvelopeLinkVms { get; set; } = new BindingList<EnvelopeLinkViewModel>();
+    public PluginParameters parameters { get; set; }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
 
     internal void InitializeParameters(PluginParameters parameters)
     {
@@ -40,7 +53,8 @@ namespace Smy.Vst.ViewModels
         var vm = new EnvelopeLinkViewModel(item);
         int linkEnvNr = item.Parameter.EnvelopeNr;
 
-        if (linkEnvNr == -1) {
+        if (linkEnvNr == -1)
+        {
           UnasignedEnvelopeLinkVms.Add(vm);
           continue;
         }
@@ -50,6 +64,43 @@ namespace Smy.Vst.ViewModels
         var envVm = EnvelopeVms[linkEnvNr];
         envVm.Link(vm, targetId, paraMgr.ParameterInfo.Label, paraMgr.ParameterInfo.ShortLabel);
       }
+
+      this.parameters = parameters;
+
+      this.DrawGraph();
+
+      foreach (var item in parameters.SmyParameters.AllManager)
+      {
+        item.ParameterChanged += Item_ParameterChanged;
+      }
+    }
+
+    private void Item_ParameterChanged(object? sender, Util.SmyParameterManager.ParameterChangedEventArgs e)
+    {
+      this.DrawGraph();
+    }
+
+    private void DrawGraph()
+    {
+      int sampleRate = 44180;
+
+      var engine = new NativeEngineHost(parameters);
+      engine.ProcessNoteOnEvent(64);
+      var ary = new float[44180 / 30];
+      unsafe
+      {
+        fixed (float* floatPtr = ary)
+        {
+          var buffAry = new[] { new VstAudioBuffer(floatPtr, ary.Length, true) };
+          engine.Generate(sampleRate, buffAry);
+        }
+      }
+
+      int i = 0;
+      var max = Math.Max(ary.Max(), -ary.Min());
+      var normalized = ary.Select(v => v / max / 2.0 + 0.5);
+      var data = normalized.Select(v => new Point((float)i++ / ary.Length, v)).ToList();
+      this.Plot = data;
     }
   }
 }

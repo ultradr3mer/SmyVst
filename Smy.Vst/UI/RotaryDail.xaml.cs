@@ -40,6 +40,7 @@ namespace Smy.Vst.UI
     private void RotaryDail_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
       this.viewModel = e.NewValue as DailViewModel;
+
       this.UpdateGeometry();
     }
 

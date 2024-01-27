@@ -20,9 +20,6 @@ namespace Smy.Vst.Smy
     private Dictionary<short,int> keys = new Dictionary<short,int>();
 
     private AudioEngine nativeEngine;
-    private long processedSamples = 0;
-    private long runtimeTicks = 0;
-    private Stopwatch sw = new Stopwatch();
     private int keyNumber;
 
     public NativeEngineHost(PluginParameters parameters)
